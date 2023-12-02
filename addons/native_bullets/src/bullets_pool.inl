@@ -269,13 +269,20 @@ void AbstractBulletsPool<Kit, BulletType>::_release_bullet(int32_t index) {
 		PhysicsServer2D::get_singleton()->area_set_shape_disabled(shared_area, bullet->shape_index, true);
 
 	_disable_bullet(bullet);
-	bullet->cycle += 1;
+	_reset_bullet(bullet);
 
 	_swap(shapes_to_indices[bullet->shape_index - starting_shape_index], shapes_to_indices[bullets[available_bullets]->shape_index - starting_shape_index]);
 	_swap(bullets[index], bullets[available_bullets]);
 
 	available_bullets += 1;
 	active_bullets -= 1;
+}
+
+template <class Kit, class BulletType>
+void AbstractBulletsPool<Kit, BulletType>::_reset_bullet(BulletType* bullet)
+{
+	bullet->cycle += 1;
+	bullet->velocity = Vector2(0, 0);
 }
 
 template <class Kit, class BulletType>

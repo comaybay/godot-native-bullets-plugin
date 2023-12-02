@@ -111,7 +111,7 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
 
   bool _process_bullet(DanmakuBullet *bullet, float delta)
   {
-    bullet->transform = bullet->transform.rotated(Math::deg_to_rad(bullet->rotation_speed));
+    bullet->velocity = bullet->velocity.rotated(bullet->rotation_speed * delta);
     bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
 
     if (!active_rect.has_point(bullet->transform.get_origin()))
@@ -129,6 +129,12 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
     bullet->lifetime += delta;
     // Return false if the bullet should not be deleted yet.
     return false;
+  }
+
+  void _reset_bullet(DanmakuBullet *bullet) {
+    bullet->cycle += 1;
+    bullet->velocity = Vector2(0, 0);
+    bullet->rotation_speed = 0;
   }
 };
 

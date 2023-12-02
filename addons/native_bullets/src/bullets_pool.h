@@ -73,10 +73,11 @@ protected:
 	Ref<Kit> kit;
 	BulletType** bullets = nullptr;
 
-	virtual inline void _init_bullet(BulletType* bullet);
+	virtual inline void _init_bullet(BulletType *bullet);
 	virtual inline void _enable_bullet(BulletType* bullet);
 	virtual inline void _disable_bullet(BulletType* bullet);
 	virtual inline bool _process_bullet(BulletType* bullet, float delta);
+	virtual inline void _reset_bullet(BulletType* bullet);
 
 	inline void _release_bullet(int32_t index);
 
