@@ -4,6 +4,7 @@
 #include "kits/dynamic_bullet_kit.h"
 #include "kits/following_bullet_kit.h"
 #include "kits/following_dynamic_bullet_kit.h"
+#include "kits/danmaku_bullet_kit.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
@@ -12,10 +13,12 @@
 
 using namespace godot;
 
-void initialize_native_bullets_module(ModuleInitializationLevel p_level) {
-    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
-        return;
-    }
+void initialize_native_bullets_module(ModuleInitializationLevel p_level)
+{
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE)
+	{
+		return;
+	}
 
 	ClassDB::register_class<Bullet>();
 	ClassDB::register_class<BulletKit>();
@@ -33,19 +36,23 @@ void initialize_native_bullets_module(ModuleInitializationLevel p_level) {
 	ClassDB::register_class<FollowingDynamicBullet>();
 	ClassDB::register_class<FollowingDynamicBulletKit>();
 
-	// Custom Bullet Kits.
-	//ClassDB::register_class<CustomBulletKit>();
+	ClassDB::register_class<DanmakuBullet>();
+	ClassDB::register_class<DanmakuBulletKit>();
 }
 
-void uninitialize_native_bullets_module(ModuleInitializationLevel p_level) {
-    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
-        return;
-    }
+void uninitialize_native_bullets_module(ModuleInitializationLevel p_level)
+{
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE)
+	{
+		return;
+	}
 }
 
-extern "C" {
+extern "C"
+{
 	// Initialization.
-	GDExtensionBool GDE_EXPORT native_bullets_init(GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
+	GDExtensionBool GDE_EXPORT native_bullets_init(GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization)
+	{
 		godot::GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
 
 		init_obj.register_initializer(initialize_native_bullets_module);
