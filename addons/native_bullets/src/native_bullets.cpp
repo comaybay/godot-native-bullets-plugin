@@ -255,9 +255,6 @@ Variant NativeBullets::obtain_bullet(Ref<BulletKit> kit) {
 			to_return.set(1, bullet_id.cycle);
 			to_return.set(2, bullet_id.set);
 
-			const String description = "Returning a BulletID: {0}, {1}, {2}.";
-			WARN_PRINT(description.format(Array::make(to_return[0], to_return[1], to_return[2])));
-
 			return to_return;
 		}
 	}
