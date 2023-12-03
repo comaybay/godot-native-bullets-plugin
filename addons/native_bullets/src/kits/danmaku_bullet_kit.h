@@ -17,6 +17,14 @@ class DanmakuBullet : public Bullet
   // Godot requires you to add this macro to make this class work properly.
   GDCLASS(DanmakuBullet, Bullet)
 public:
+  Vector2 acceleration = Vector2(0, 0);
+
+  Vector2 get_acceleration() { return acceleration; }
+  void set_acceleration(Vector2 acceleration)
+  {
+    this->acceleration = acceleration;
+  }
+
   float rotation_speed = 0;
   float get_rotation_speed() { return rotation_speed; }
   void set_rotation_speed(float rotation_speed)
@@ -26,11 +34,14 @@ public:
 
   static void _bind_methods()
   {
+    ClassDB::bind_method(D_METHOD("set_acceleration", "acceleration"), &DanmakuBullet::set_acceleration);
+    ClassDB::bind_method(D_METHOD("get_acceleration"), &DanmakuBullet::get_acceleration);
     ClassDB::bind_method(D_METHOD("set_rotation_speed", "rotation_speed"), &DanmakuBullet::set_rotation_speed);
     ClassDB::bind_method(D_METHOD("get_rotation_speed"), &DanmakuBullet::get_rotation_speed);
-
     // Registering an Object reference property with GODOT_PROPERTY_HINT_NODE_TYPE and hint_string is just
     // a way to tell the editor plugin the type of the property, so that it can be viewed in the BulletKit inspector.
+    ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "acceleration", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, ""),
+                 "set_acceleration", "get_acceleration");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rotation_speed", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, ""),
                  "set_rotation_speed", "get_rotation_speed");
   }
@@ -108,9 +119,32 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
                                                                    texture_rid);
   }
 
+  bool _process_bullet(DanmakuBullet *bullet, float delta)
+  {
+    bullet->velocity = (bullet->velocity + bullet->acceleration * delta).rotated(bullet->rotation_speed * delta);
+    bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
+
+    if (!active_rect.has_point(bullet->transform.get_origin()))
+    {
+      // Return true if the bullet should be deleted.
+      return true;
+    }
+    // Rotate the bullet based on its velocity if "auto_rotate" is enabled.
+    if (kit->auto_rotate)
+    {
+      bullet->transform.set_rotation(bullet->velocity.angle());
+    }
+
+    // Bullet is still alive, increase its lifetime.
+    bullet->lifetime += delta;
+    // Return false if the bullet should not be deleted yet.
+    return false;
+  }
+
   void _reset_bullet(DanmakuBullet *bullet) {
     bullet->cycle += 1;
     bullet->velocity = Vector2(0, 0);
+    bullet->acceleration = Vector2(0, 0);
     bullet->rotation_speed = 0;
   }
 };
