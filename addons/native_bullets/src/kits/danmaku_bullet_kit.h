@@ -95,7 +95,6 @@ public:
 // Bullets pool definition.
 class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuBullet>
 {
-
   void _enable_bullet(DanmakuBullet *bullet)
   {
     // Reset the bullet lifetime.
@@ -107,28 +106,6 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
     RenderingServer::get_singleton()->canvas_item_add_texture_rect(bullet->item_rid,
                                                                    texture_rect,
                                                                    texture_rid);
-  }
-
-  bool _process_bullet(DanmakuBullet *bullet, float delta)
-  {
-    bullet->velocity = bullet->velocity.rotated(bullet->rotation_speed * delta);
-    bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
-
-    if (!active_rect.has_point(bullet->transform.get_origin()))
-    {
-      // Return true if the bullet should be deleted.
-      return true;
-    }
-    // Rotate the bullet based on its velocity if "auto_rotate" is enabled.
-    if (kit->auto_rotate)
-    {
-      bullet->transform.set_rotation(bullet->velocity.angle());
-    }
-
-    // Bullet is still alive, increase its lifetime.
-    bullet->lifetime += delta;
-    // Return false if the bullet should not be deleted yet.
-    return false;
   }
 
   void _reset_bullet(DanmakuBullet *bullet) {

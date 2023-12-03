@@ -53,6 +53,7 @@ public:
 	int32_t get_active_bullets();
 
 	virtual int32_t _process(float delta) = 0;
+	virtual int32_t process_single_bullet(BulletID id, float delta) = 0;
 
 	virtual void spawn_bullet(Dictionary properties) = 0;
 	virtual BulletID obtain_bullet() = 0;
@@ -89,6 +90,7 @@ public:
 		int32_t set_index, Ref<BulletKit> kit, int32_t pool_size, int32_t z_index) override;
 
 	virtual int32_t _process(float delta) override;
+	virtual int32_t process_single_bullet(BulletID id, float delta) override;
 
 	virtual void spawn_bullet(Dictionary properties) override;
 	virtual BulletID obtain_bullet() override;

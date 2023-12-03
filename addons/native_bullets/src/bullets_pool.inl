@@ -157,23 +157,7 @@ void AbstractBulletsPool<Kit, BulletType>::_init(Node* parent_hint, RID shared_a
 
 template <class Kit, class BulletType>
 int32_t AbstractBulletsPool<Kit, BulletType>::_process(float delta) {
-	if(kit->use_viewport_as_active_rect) {
-		Rect2 viewport_rect = viewport->get_visible_rect();
-		Transform2D viewport_inv_transform = canvas_layer ? canvas_layer->get_transform().affine_inverse() : viewport->get_canvas_transform().affine_inverse();
-		Vector2 top_left_point = viewport_inv_transform.xform(Vector2(0, 0));
-		Vector2 top_right_point = viewport_inv_transform.xform(Vector2(viewport_rect.size.x, 0));
-		Vector2 bot_right_point = viewport_inv_transform.xform(viewport_rect.size);
-		Vector2 bot_left_point = viewport_inv_transform.xform(Vector2(0, viewport_rect.size.y));
-
-		Vector2 origin = Vector2(Math::min(top_left_point.x, Math::min(top_right_point.x, Math::min(bot_right_point.x, bot_left_point.x))),
-			Math::min(top_left_point.y, Math::min(top_right_point.y, Math::min(bot_right_point.y, bot_left_point.y))));
-		Vector2 edge = Vector2(Math::max(top_left_point.x, Math::max(top_right_point.x, Math::max(bot_right_point.x, bot_left_point.x))),
-			Math::max(top_left_point.y, Math::max(top_right_point.y, Math::max(bot_right_point.y, bot_left_point.y))));
-
-		active_rect = Rect2(origin, edge - origin);
-	} else {
-		active_rect = kit->active_rect;
-	}
+	active_rect = kit->active_rect;
 	int32_t amount_variation = 0;
 
 	if(collisions_enabled) {
@@ -204,6 +188,22 @@ int32_t AbstractBulletsPool<Kit, BulletType>::_process(float delta) {
 			RenderingServer::get_singleton()->canvas_item_set_transform(bullet->item_rid, bullet->transform);
 		}
 	}
+	return amount_variation;
+}
+
+template <class Kit, class BulletType>
+int32_t AbstractBulletsPool<Kit, BulletType>::process_single_bullet(BulletID bullet_id, float delta)
+{
+	int32_t bullet_index = shapes_to_indices[bullet_id.index - starting_shape_index];
+	BulletType *bullet = bullets[bullet_index];
+	int32_t amount_variation = 0;
+
+	if (_process_bullet(bullet, delta))
+	{
+		_release_bullet(bullet_index);
+		return amount_variation -= 1;
+	}
+
 	return amount_variation;
 }
 

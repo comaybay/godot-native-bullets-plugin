@@ -32,6 +32,7 @@ void NativeBullets::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_kit_from_bullet", "bullet_id"), &NativeBullets::get_kit_from_bullet);
 	ClassDB::bind_method(D_METHOD("set_bullet_property", "bullet_id", "property", "value"), &NativeBullets::set_bullet_property);
 	ClassDB::bind_method(D_METHOD("get_bullet_property", "bullet_id", "property"), &NativeBullets::get_bullet_property);
+	ClassDB::bind_method(D_METHOD("physics_process_bullet", "bullet_id", "delta"), &NativeBullets::physics_process_bullet);
 }
 
 NativeBullets::NativeBullets() {
@@ -62,6 +63,16 @@ void NativeBullets::_physics_process(float delta) {
 			active_bullets += bullets_variation;
 		}
 	}
+}
+
+void NativeBullets::physics_process_bullet(Variant bullet_id, float delta)
+{
+	PackedInt32Array id = bullet_id.operator PackedInt32Array();
+	int32_t pool_index = _get_pool_index(id[2], id[0]);
+
+	int bullet_variation = pool_sets[id[2]].pools[pool_index].pool->process_single_bullet(BulletID(id[0], id[1], id[2]), delta);
+	available_bullets -= bullet_variation;
+	active_bullets += bullet_variation;
 }
 
 void NativeBullets::_clear_rids() {

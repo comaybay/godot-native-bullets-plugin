@@ -40,12 +40,10 @@ public:
 	int32_t collision_layer = 0;
 	int32_t collision_mask = 0;
 	Ref<Shape2D> collision_shape;
-	// Controls whether the active rect is automatically set as the viewport visible rect.
-	bool use_viewport_as_active_rect = true;
 	// Controls where the bullets can live, if a bullet exits this rect, it will be removed.
 	Rect2 active_rect;
 	// If enabled, bullets will auto-rotate based on their direction of travel.
-	bool auto_rotate = false;
+	bool auto_rotate = true;
 	// Allows the ability to have a unique-ish value in each instance of the bullet material.
 	// Can be used to offset the bullets animation by a unique amount to avoid having them animate in sync.
 	int32_t unique_modulate_component = 0;
@@ -76,12 +74,6 @@ public:
 	Ref<Shape2D> get_collision_shape() { return collision_shape; }
 	void set_collision_shape(Ref<Shape2D> shape) {
 		collision_shape = shape;
-	}
-
-	bool get_use_viewport_as_active_rect() { return use_viewport_as_active_rect; }
-	void set_use_viewport_as_active_rect(bool use) {
-		use_viewport_as_active_rect = use;
-		notify_property_list_changed();
 	}
 
 	Rect2 get_active_rect() { return active_rect; }
@@ -118,8 +110,6 @@ public:
 		ClassDB::bind_method(D_METHOD("get_collision_mask"), &BulletKit::get_collision_mask);
 		ClassDB::bind_method(D_METHOD("set_collision_shape", "shape"), &BulletKit::set_collision_shape);
 		ClassDB::bind_method(D_METHOD("get_collision_shape"), &BulletKit::get_collision_shape);
-		ClassDB::bind_method(D_METHOD("set_use_viewport_as_active_rect", "use"), &BulletKit::set_use_viewport_as_active_rect);
-		ClassDB::bind_method(D_METHOD("get_use_viewport_as_active_rect"), &BulletKit::get_use_viewport_as_active_rect);
 		ClassDB::bind_method(D_METHOD("set_active_rect", "rect"), &BulletKit::set_active_rect);
 		ClassDB::bind_method(D_METHOD("get_active_rect"), &BulletKit::get_active_rect);
 		ClassDB::bind_method(D_METHOD("set_auto_rotate", "rotate"), &BulletKit::set_auto_rotate);
@@ -142,8 +132,6 @@ public:
 			PROPERTY_USAGE_DEFAULT, "int"), "set_collision_mask", "get_collision_mask");
 		ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collision_shape", PROPERTY_HINT_RESOURCE_TYPE, "Shape2D", 
 			PROPERTY_USAGE_DEFAULT, "Shape2D"), "set_collision_shape", "get_collision_shape");
-		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_viewport_as_active_rect", PROPERTY_HINT_NONE, "", 
-			PROPERTY_USAGE_DEFAULT, "bool"), "set_use_viewport_as_active_rect", "get_use_viewport_as_active_rect");
 		ADD_PROPERTY(PropertyInfo(Variant::RECT2, "active_rect", PROPERTY_HINT_NONE, "", 
 			PROPERTY_USAGE_DEFAULT, "Rect2"), "set_active_rect", "get_active_rect");
 		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_rotate", PROPERTY_HINT_NONE, "", 

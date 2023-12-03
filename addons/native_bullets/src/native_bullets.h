@@ -61,8 +61,9 @@ public:
 	void _init();
 
 	void _physics_process(float delta);
+	void physics_process_bullet(Variant bullet_id, float delta);
 
-	void mount(Node* bullets_environment);
+	void mount(Node *bullets_environment);
 	void unmount(Node* bullets_environment);
 	Node* get_bullets_environment();
 
