@@ -25,6 +25,13 @@ public:
     this->acceleration = acceleration;
   }
 
+  float velocity_scale = 1.0;
+  float get_velocity_scale() { return velocity_scale; }
+  void set_velocity_scale(float velocity_scale)
+  {
+    this->velocity_scale = velocity_scale;
+  }
+
   float rotation_speed = 0;
   float get_rotation_speed() { return rotation_speed; }
   void set_rotation_speed(float rotation_speed)
@@ -36,12 +43,16 @@ public:
   {
     ClassDB::bind_method(D_METHOD("set_acceleration", "acceleration"), &DanmakuBullet::set_acceleration);
     ClassDB::bind_method(D_METHOD("get_acceleration"), &DanmakuBullet::get_acceleration);
+    ClassDB::bind_method(D_METHOD("set_velocity_scale", "velocity_scale"), &DanmakuBullet::set_velocity_scale);
+    ClassDB::bind_method(D_METHOD("get_velocity_scale"), &DanmakuBullet::get_velocity_scale);
     ClassDB::bind_method(D_METHOD("set_rotation_speed", "rotation_speed"), &DanmakuBullet::set_rotation_speed);
     ClassDB::bind_method(D_METHOD("get_rotation_speed"), &DanmakuBullet::get_rotation_speed);
     // Registering an Object reference property with GODOT_PROPERTY_HINT_NODE_TYPE and hint_string is just
     // a way to tell the editor plugin the type of the property, so that it can be viewed in the BulletKit inspector.
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "acceleration", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, ""),
                  "set_acceleration", "get_acceleration");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "velocity_scale", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, ""),
+                 "set_velocity_scale", "get_velocity_scale");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rotation_speed", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, ""),
                  "set_rotation_speed", "get_rotation_speed");
   }
@@ -122,7 +133,7 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
   bool _process_bullet(DanmakuBullet *bullet, float delta)
   {
     bullet->velocity = (bullet->velocity + bullet->acceleration * delta).rotated(bullet->rotation_speed * delta);
-    bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
+    bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * bullet->velocity_scale * delta);
 
     if (!active_rect.has_point(bullet->transform.get_origin()))
     {
@@ -141,7 +152,8 @@ class DanmakuBulletsPool : public AbstractBulletsPool<DanmakuBulletKit, DanmakuB
     return false;
   }
 
-  void _reset_bullet(DanmakuBullet *bullet) {
+  void _reset_bullet(DanmakuBullet *bullet)
+  {
     bullet->cycle += 1;
     bullet->velocity = Vector2(0, 0);
     bullet->acceleration = Vector2(0, 0);

@@ -6,7 +6,6 @@
 
 using namespace godot;
 
-
 struct BulletID {
 	int32_t index;
 	int32_t cycle;
@@ -19,6 +18,7 @@ struct BulletID {
 class Bullet : public Object {
 	GDCLASS(Bullet, Object)
 
+public:
 	RID item_rid;
 	int32_t cycle = 0;
 	int32_t shape_index = -1;
