@@ -166,7 +166,7 @@ void NativeBullets::mount(Node* bullets_environment) {
 			shared_area = PhysicsServer2D::get_singleton()->area_create();
 			PhysicsServer2D::get_singleton()->area_set_collision_layer(shared_area, first_kit->collision_layer);
 			PhysicsServer2D::get_singleton()->area_set_collision_mask(shared_area, first_kit->collision_mask);
-			PhysicsServer2D::get_singleton()->area_set_monitorable(shared_area, true);
+			PhysicsServer2D::get_singleton()->area_set_monitorable(shared_area, false);
 			PhysicsServer2D::get_singleton()->area_set_space(shared_area, world_space);
 
 			shared_areas.push_back(shared_area);

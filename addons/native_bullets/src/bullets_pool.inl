@@ -172,7 +172,6 @@ int32_t AbstractBulletsPool<Kit, BulletType>::_process(float delta) {
 			}
 
 			RenderingServer::get_singleton()->canvas_item_set_transform(bullet->item_rid, bullet->transform);
-			PhysicsServer2D::get_singleton()->area_set_shape_transform(shared_area, bullet->shape_index, bullet->transform);
 		}
 	} else {
 		for(int32_t i = pool_size - 1; i >= available_bullets; i--) {
