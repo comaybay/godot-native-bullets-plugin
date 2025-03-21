@@ -3,14 +3,7 @@
 
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/node.hpp>
-
 using namespace godot;
-
-struct Bullet {
-    float rotation;
-    Vector2 velocity;
-    uint32_t lifetime;
-};
 
 class Danmaku : public Node {
 	GDCLASS(Danmaku, Node)
@@ -18,6 +11,9 @@ class Danmaku : public Node {
 private:
     std::vector<std::unique_ptr<Bullet>> dog_bullets;
     std::vector<std::unique_ptr<Bullet>> cat_bullets;
+
+    std::vector<CharacterCRect> cat_rects;
+    std::vector<CharacterCRect> dog_rects;
 
 public:
 	Danmaku();
