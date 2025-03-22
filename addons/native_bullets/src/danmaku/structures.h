@@ -3,95 +3,88 @@
 
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/variant/vector2.hpp>
-#include <godot_cpp/variant/packed_byte_array.hpp>
-#include <godot_cpp/variant/dictionary.hpp>
-#include <godot_cpp/classes/node.hpp>
+
 using namespace godot;
 
-struct Bullet {
-    real_t rotation;
-    Vector2 velocity;
+struct Bullet
+{
     Vector2 position;
-    uint32_t lifetime;
+    Vector2 velocity;
+    uint16_t radius;
+    uint64_t id;
+    bool destroyed;  // bullet has collided with something and is no longer active
+    bool controlled; // bullet is currently being used by bullet controller
+
+    Bullet(uint64_t id, uint16_t radius);
+
+    void reset(uint64_t id, uint16_t radius);
+
+    inline void destroy();
+    inline bool is_reusable() const;
 };
 
-struct CharacterCRect {
+struct CharacterCRect
+{
     Vector2 position;
     Vector2 size;
 };
 
-class CharacterCRectList {
-  public:
-    uint32_t size;
-    uint32_t bytes_size;
-    // for the sake of performance, bytes_data can contains garbage data if travel pass the specified bytes_size
-    PackedByteArray bytes_data; 
-    const uint8_t bytes_per_crect = sizeof(real_t) * 4; // position + size of rect
-    Dictionary character_rid_to_crect_index;
-
-  private:
-    uint32_t bytes_capacity; 
-
-    CharacterCRectList() {
-        bytes_data = PackedByteArray();
-        bytes_capacity = 400 * bytes_per_crect;
-        bytes_data.resize(bytes_capacity);
-        bytes_size = 0;
-        size = 0;
-    }
-
-    void add_crect(const Ref<Node>& character) {
-        uint64_t instance_id = character->get_instance_id();
-        
-        character_rid_to_crect_index[instance_id] = bytes_size / bytes_per_crect;
-
-        if ((bytes_size + bytes_per_crect) < bytes_capacity) {
-            bytes_capacity = bytes_capacity * 2;
-            bytes_data.resize(bytes_capacity);
-        }
-
-        Rect2 collision_rect = character->get("collision_rect");
-
-        const uint8_t unit_size = sizeof(real_t);
-        bytes_data.encode_float(bytes_size, collision_rect.position.x);
-        bytes_data.encode_float(bytes_size + unit_size, collision_rect.position.y);
-        bytes_data.encode_float(bytes_size + unit_size * 2, collision_rect.size.x);
-        bytes_data.encode_float(bytes_size + unit_size * 3, collision_rect.size.y);
-        
-        bytes_size += bytes_per_crect;
-        size++;
-    }
-
-    void remove_crect(const Ref<Node>& character) {
-        uint64_t instance_id = character->get_instance_id();
-        int64_t index = character_rid_to_crect_index[instance_id];
-        character_rid_to_crect_index.erase(instance_id);
-
-        // erase by moving the last crect bytes to deleted crect
-        int64_t last_index = bytes_size - bytes_per_crect;
-
-        for (int i = 0; i < bytes_per_crect; i++) {
-            bytes_data[index + i] = bytes_data[last_index + i];
-        }
-
-        // reduce the size of the bytes_data (but not the capacity)
-        bytes_size -= bytes_per_crect;
-        size--;
-    }
-    
-    bool circle_rect_collision(const Vector2& circle_position, float circle_radius, const Rect2& rect) 
+template <typename T>
+class UnorderVector
 {
-    // Find the closest point on the rectangle to the circle center
-    float closest_x = std::max(rect.position.x, std::min(circle_position.x, rect.position.x + rect.size.x));
-    float closest_y = std::max(rect.position.y, std::min(circle_position.y, rect.position.y + rect.size.y));
-    
-    // Calculate squared distance and compare with squared radius
-    float dx = circle_position.x - closest_x;
-    float dy = circle_position.y - closest_y;
-    
-    return (dx * dx + dy * dy) <= (circle_radius * circle_radius);
-}
-    
+private:
+    uint32_t actual_size;
+    std::vector<T> vector;
+
+public:
+    UnorderVector(uint32_t initial_capacity) : actual_size(0), vector(initial_capacity) {}
+
+    inline uint32_t size() const { return actual_size; }
+
+    inline uint32_t capacity() const { return vector.capacity(); }
+
+    inline T &operator[](uint32_t index)
+    {
+        return vector[index];
+    }
+
+    inline const T &operator[](uint32_t index) const
+    {
+        return vector[index];
+    }
+
+    inline void push_back(const T &value)
+    {
+        if (actual_size < vector.size())
+        {
+            vector[actual_size] = value;
+        }
+        else
+        {
+            vector.push_back(value);
+        }
+        actual_size++;
+    }
+
+    template <typename... Args>
+    inline void emplace_back(Args &&...args)
+    {
+        vector.emplace_back(std::forward<Args>(args)...);
+        actual_size++;
+    }
+
+    inline void swap_remove(uint32_t index)
+    {
+        // move the last active item to the index of the removed item (keeping all active items contiguous)
+        vector[index] = vector[actual_size - 1];
+        actual_size--;
+    }
+
+    inline T pop()
+    {
+        actual_size--;
+        return vector[actual_size];
+    }
 };
 
 #endif

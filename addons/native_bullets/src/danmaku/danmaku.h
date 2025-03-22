@@ -3,17 +3,19 @@
 
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/node.hpp>
+#include "structures.h"
+
 using namespace godot;
 
 class Danmaku : public Node {
 	GDCLASS(Danmaku, Node)
 
 private:
-    std::vector<std::unique_ptr<Bullet>> dog_bullets;
-    std::vector<std::unique_ptr<Bullet>> cat_bullets;
+    BulletPool dog_bullets;
+    BulletPool cat_bullets;
 
-    std::vector<CharacterCRect> cat_rects;
-    std::vector<CharacterCRect> dog_rects;
+    CharacterCRectList cat_rects;
+    CharacterCRectList dog_rects;
 
 public:
 	Danmaku();
