@@ -4,6 +4,8 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include "structures.h"
+#include "bullet_pool.h"
+#include "character_pool.h"
 
 using namespace godot;
 
@@ -14,9 +16,7 @@ private:
     BulletPool dog_bullets;
     BulletPool cat_bullets;
 
-    CharacterCRectList cat_rects;
-    CharacterCRectList dog_rects;
-
+    CharacterPool characters;
 public:
 	Danmaku();
 	~Danmaku();

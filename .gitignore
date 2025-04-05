@@ -2,7 +2,10 @@
 # Project-specific ignores
 addons/native_bullets/tmp/
 addons/native_bullets/SCons/
-addons/
+addons/native_bullets/godot-cpp/
+
+
+.vs/
 
 # Godot 4+ specific ignores
 .godot/
