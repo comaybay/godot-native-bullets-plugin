@@ -15,11 +15,6 @@ Global::Global()
 
 void Global::_bind_methods()
 {
-  // bind constants as property
-  BIND_PROPERTY_GETONLY(TOUCH_EPSISLON, Variant::FLOAT, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
-  BIND_PROPERTY_GETONLY(TIME_STOP_TIME_SCALE, Variant::FLOAT, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
-  BIND_PROPERTY_GETONLY(VIEWPORT_SIZE, Variant::VECTOR2, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
-
   ClassDB::bind_method(D_METHOD("_ready"), &Global::_ready);
   ClassDB::bind_method(D_METHOD("_physics_process", "delta"), &Global::_physics_process);
   ClassDB::bind_method(D_METHOD("is_host_OS_web"), &Global::is_host_OS_web);

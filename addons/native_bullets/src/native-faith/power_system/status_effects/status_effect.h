@@ -16,12 +16,20 @@ protected:
     static void _bind_methods();
 
 public:
+    enum Type {
+        BUFF,
+        DEBUFF
+    };
+
     PROPERTY(StringName, id, StringName());
     PROPERTY(float, attack_damage_strength, 0.0f);
     PROPERTY(float, movement_speed_strength, 0.0f);
     PROPERTY(float, attack_cooldown_strength, 0.0f);
     PROPERTY(float, attack_speed_strength, 0.0f);
     PROPERTY(float, defense_strength, 0.0f);
+    PROPERTY(Type, type, Type::BUFF);
 };
+
+VARIANT_ENUM_CAST(StatusEffect::Type);
 
 #endif // STATUS_EFFECT_H

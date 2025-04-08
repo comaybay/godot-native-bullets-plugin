@@ -1,6 +1,7 @@
 #ifndef FSM_STATE_H
 #define FSM_STATE_H
 
+#include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
@@ -28,7 +29,7 @@ public:
     GDVIRTUAL1(physics_update, float);
     GDVIRTUAL1(input, const Ref<InputEvent>&);
     
-    Ref<FSM> fsm;
+    FSM* fsm;
     Dictionary data;
 
     bool state_entered;

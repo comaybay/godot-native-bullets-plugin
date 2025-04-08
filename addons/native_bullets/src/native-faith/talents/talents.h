@@ -18,6 +18,8 @@ protected:
     static void _bind_methods();
 
 public:
+    Talents();
+    ~Talents();
     void setup(Character* character);
 
     // Getters and setters

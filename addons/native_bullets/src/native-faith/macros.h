@@ -14,10 +14,6 @@
   type member_name = default_value;
 
 // Define helper macros for property binding
-#define BIND_PROPERTY_GETONLY(prop_name, prop_type, hint, hint_str, usage) \
-    ClassDB::bind_method(D_METHOD("get_" #prop_name), &get_##prop_name); \
-    ADD_PROPERTY(PropertyInfo(Variant::prop_type, #prop_name, hint, hint_str, usage), "", "get_" #prop_name)
-
 #define BIND_PROPERTY(prop_name, prop_type, hint, hint_str, usage) \
     ClassDB::bind_method(D_METHOD("set_" #prop_name, "value"), &set_##prop_name); \
     ClassDB::bind_method(D_METHOD("get_" #prop_name), &get_##prop_name); \
@@ -25,6 +21,11 @@
 
 #define BIND_METHOD_0(method_name) \
     ClassDB::bind_method(D_METHOD(#method_name), &method_name)
+
+#define STRINGIFY(x) #x
+
+#define BIND_METHOD_GETTER(prop_name, ...) \
+    ClassDB::bind_method(D_METHOD(STRINGIFY(get_##prop_name), __VA_ARGS__), &get_##prop_name)
 
 #define BIND_METHOD(method_name, ...) \
     ClassDB::bind_method(D_METHOD(#method_name, __VA_ARGS__), &method_name)

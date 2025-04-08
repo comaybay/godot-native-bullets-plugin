@@ -24,12 +24,6 @@ private:
 public:
     Global();
 
-    PROPERTY_GETONLY(float, idk, 2.0f)
-    PROPERTY_GETONLY(float, TOUCH_EPSISLON, 2.0f)
-    PROPERTY_GETONLY(Vector2, VIEWPORT_SIZE, Vector2(0, 0))
-    
-    PROPERTY_GETONLY(float, TIME_STOP_TIME_SCALE, 0.0001f)
-
 protected:
     static void _bind_methods();
 

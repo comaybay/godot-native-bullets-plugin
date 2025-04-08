@@ -1,12 +1,17 @@
 #ifndef FSM_H
 #define FSM_H
 
+#include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/classes/input_event.hpp>
-#include "fsm_state.h"
+#include <godot_cpp/variant/typed_array.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 #include "../../macros.h"
+#include "fsm_state.h"
 
 using namespace godot;
+
 
 class FSM : public Node {
     GDCLASS(FSM, Node);
@@ -45,10 +50,10 @@ public:
     bool has_state(const StringName& state_name) const;
     Dictionary get_current_state_data() const;
     void add_state(Ref<FSMState> state);
-    void change_state(const StringName& next_state_name, Dictionary& data = Dictionary());
+    void change_state(const StringName& next_state_name, Dictionary data = Dictionary());
     void set_disabled(bool disabled);
 
-    PROPERTY(TypedArray<Ref<FSMState>>, states, {});
+    PROPERTY(TypedArray<RefCounted>, states, {});
     PROPERTY(Node*, state_owner, {});
     PROPERTY(StringName, initial_state, {});
 };

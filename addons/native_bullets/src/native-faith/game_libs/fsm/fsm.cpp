@@ -115,11 +115,11 @@ void FSM::_on_owner_ready() {
 }
 
 void FSM::_register_state(Ref<FSMState> state) {
-    state->fsm = Ref(this);
+    state->fsm = this;
     GDVIRTUAL_CALL_PTR(state, setup, state_owner);
 }
 
-void FSM::change_state(const StringName& state_name, Dictionary& data) {
+void FSM::change_state(const StringName& state_name, Dictionary data) {
     StringName next_state_name = state_name;
     
     if (_redirect_state_map.has(next_state_name)) {

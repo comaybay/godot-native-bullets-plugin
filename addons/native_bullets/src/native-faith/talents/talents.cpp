@@ -3,6 +3,12 @@
 #include "shield_talent.h"
 #include "survive_talent.h"
 
+Talents::Talents() {
+}
+
+Talents::~Talents() {
+}
+
 void Talents::_bind_methods() {
     ClassDB::bind_method(D_METHOD("setup", "character"), &Talents::setup);
     

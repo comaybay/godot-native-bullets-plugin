@@ -10,21 +10,18 @@
 #include "status_effect.h"
 #include "status_effect_stack.h"
 
-class Character;
-
 using namespace godot;
 
 class StatusEffects {
 private:
     StatusEffectStack buff_stack;
     StatusEffectStack debuff_stack;
-    Character* character;
 
     std::vector<Ref<StatusEffect>> buffs;
     std::vector<Ref<StatusEffect>> debuffs;
 
     void _update_status_effect_stack(StatusEffectStack& stack, const std::vector<Ref<StatusEffect>>& status_effects);
-    void _update_character_stats();
+    void _update_multipliers();
     float _get_attack_damage_multiplier();
     float _get_attack_speed_multiplier();
     float _get_attack_cooldown_multiplier();
@@ -39,13 +36,8 @@ public:
     float movement_speed_multiplier = 1.0f;
     float defense_multiplier = 1.0f;
 
-    void add_buff(Ref<StatusEffect> status_effect);
-    void add_debuff(Ref<StatusEffect> status_effect);
-    void remove_buff(Ref<StatusEffect> status_effect);
-    void remove_debuff(Ref<StatusEffect> status_effect);
-    Ref<StatusEffect> get_debuff_id(StringName id);
-    Ref<StatusEffect> get_buff_id(StringName id);
-    void setup(Character* character);
+    void add_status_effect(Ref<StatusEffect> status_effect);
+    void remove_status_effect(Ref<StatusEffect> status_effect);
 };
 
 #endif // STATUS_EFFECTS_H

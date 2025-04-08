@@ -118,9 +118,9 @@ Character* Logic::find_random_enemy(Character* character) {
 }
 
 // Find x position in a crowd of enemies
-// character_type: type of the character that needing find the x position
+// kind: type of the character that needing find the x position
 // rate: 0.0 -> 1.0, 0.0 means x position of character in the frontline of the crowd, 1.0 means the position of character in the backline of the crowd
-float Logic::find_x(int character_type, const Array& enemies, float rate) {
+float Logic::find_x(Character::Kind kind, const Array& enemies, float rate) {
     ERR_FAIL_COND_V(enemies.size() == 0, 0.0f);
     
     float min_x = INFINITY;
@@ -134,7 +134,7 @@ float Logic::find_x(int character_type, const Array& enemies, float rate) {
         }
     }
     
-    if (character_type == Character::Kind::DOG) {
+    if (kind == Character::Kind::DOG) {
         return min_x + ((max_x - min_x) * rate);
     } else {
         return min_x + ((max_x - min_x) * (1.0 - rate));
@@ -211,7 +211,7 @@ void Logic::_bind_methods() {
     ClassDB::bind_static_method("Logic", D_METHOD("set_fly_path_curve", "curve", "options"), &Logic::set_fly_path_curve);
     ClassDB::bind_static_method("Logic", D_METHOD("set_curve", "curve", "options"), &Logic::set_curve);
     ClassDB::bind_static_method("Logic", D_METHOD("find_random_enemy", "character"), &Logic::find_random_enemy);
-    ClassDB::bind_static_method("Logic", D_METHOD("find_x", "character_type", "enemies", "rate"), &Logic::find_x);
+    ClassDB::bind_static_method("Logic", D_METHOD("find_x", "kind", "enemies", "rate"), &Logic::find_x);
     ClassDB::bind_static_method("Logic", D_METHOD("tween_move", "character", "options"), &Logic::tween_move);
     ClassDB::bind_static_method("Logic", D_METHOD("tween_move_curve", "character", "options"), &Logic::tween_move_curve);
 }

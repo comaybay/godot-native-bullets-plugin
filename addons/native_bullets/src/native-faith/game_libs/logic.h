@@ -39,9 +39,9 @@ public:
     static Character* find_random_enemy(Character* character);
 
     // Find x position in a crowd of enemies
-    // character_type: type of the character that needing find the x position
+    // kind: type of the character that needing find the x position
     // rate: 0.0 -> 1.0, 0.0 means x position of character in the frontline of the crowd, 1.0 means the position of character in the backline of the crowd
-    static float find_x(int character_type, const Array& enemies, float rate);
+    static float find_x(Character::Kind kind, const Array& enemies, float rate);
 
     static Ref<Curve> default_tween_curve;
     

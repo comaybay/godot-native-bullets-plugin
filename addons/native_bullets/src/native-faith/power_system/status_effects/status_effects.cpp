@@ -1,5 +1,4 @@
 #include "status_effects.h"
-#include "../../character.h"
 
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -16,66 +15,46 @@ StatusEffects::StatusEffects()
 {
 }
 
-void StatusEffects::add_buff(Ref<StatusEffect> buff)
+void StatusEffects::add_status_effect(Ref<StatusEffect> status_effect)
 {
-    buffs.push_back(buff);
-    _update_status_effect_stack(buff_stack, buffs);
-    _update_character_stats();
-}
-
-void StatusEffects::remove_buff(Ref<StatusEffect> buff)
-{
-    auto it = std::find(buffs.begin(), buffs.end(), buff);
-    if (it != buffs.end())
+    if (status_effect->type == StatusEffect::Type::BUFF)
     {
-        buffs.erase(it);
+        buffs.push_back(status_effect);
         _update_status_effect_stack(buff_stack, buffs);
-        _update_character_stats();
-    }
-}
-
-void StatusEffects::add_debuff(Ref<StatusEffect> debuff)
-{
-    debuffs.push_back(debuff);
-    _update_status_effect_stack(debuff_stack, debuffs);
-    _update_character_stats();
-}
-
-void StatusEffects::remove_debuff(Ref<StatusEffect> debuff)
-{
-    auto it = std::find(debuffs.begin(), debuffs.end(), debuff);
-    if (it != debuffs.end())
-    {
-        debuffs.erase(it);
+    } else {
+        debuffs.push_back(status_effect);
         _update_status_effect_stack(debuff_stack, debuffs);
-        _update_character_stats();
     }
+
+    _update_multipliers();
 }
 
-Ref<StatusEffect> StatusEffects::get_debuff_id(StringName id)
+void StatusEffects::remove_status_effect(Ref<StatusEffect> status_effect)
 {
-    for (int i = 0; i < debuffs.size(); i++)
-    {
-        Ref<StatusEffect> debuff = debuffs[i];
-        if (debuff->get_id() == id)
+    if (status_effect->type == StatusEffect::Type::BUFF) {
+        auto it = std::find(buffs.begin(), buffs.end(), status_effect);
+        if (it != buffs.end())
         {
-            return debuff;
+            buffs.erase(it);
+            _update_status_effect_stack(buff_stack, buffs);
+            _update_multipliers();
+        }
+        else {
+            WARN_PRINT(vformat("Status effect not found: %s", status_effect->id));
         }
     }
-    return Ref<StatusEffect>();
-}
-
-Ref<StatusEffect> StatusEffects::get_buff_id(StringName id)
-{
-    for (int i = 0; i < buffs.size(); i++)
-    {
-        Ref<StatusEffect> buff = buffs[i];
-        if (buff->get_id() == id)
+    else {
+        auto it = std::find(debuffs.begin(), debuffs.end(), status_effect);
+        if (it != debuffs.end())
         {
-            return buff;
+            debuffs.erase(it);
+            _update_status_effect_stack(debuff_stack, debuffs);
+            _update_multipliers();
+        }
+        else {
+            WARN_PRINT(vformat("Status effect not found: %s", status_effect->id));
         }
     }
-    return Ref<StatusEffect>();
 }
 
 void StatusEffects::_update_status_effect_stack(StatusEffectStack& stack, const std::vector<Ref<StatusEffect>>& status_effects)
@@ -118,19 +97,13 @@ void StatusEffects::_update_status_effect_stack(StatusEffectStack& stack, const 
     }
 }
 
-void StatusEffects::_update_character_stats()
+void StatusEffects::_update_multipliers()
 {
     attack_damage_multiplier = _get_attack_damage_multiplier();
     attack_cooldown_multiplier = _get_attack_cooldown_multiplier();
     movement_speed_multiplier = _get_movement_speed_multiplier();
     defense_multiplier = _get_defense_multiplier();
     attack_speed_multiplier = _get_attack_speed_multiplier();
-
-    character->update_attack_damage();
-    character->update_attack_cooldown();
-    character->update_speed();
-    character->update_defense();
-    character->update_animation_speed();
 }
 
 float StatusEffects::_get_attack_damage_multiplier()
@@ -161,9 +134,4 @@ float StatusEffects::_get_defense_multiplier()
 {
     float damage_taken = buff_stack.apply_mul(1.0f, buff_stack.defense_stack);
     return debuff_stack.apply_add(damage_taken, debuff_stack.defense_stack);
-}
-
-void StatusEffects::setup(Character *character)
-{
-    this->character = character;
 }

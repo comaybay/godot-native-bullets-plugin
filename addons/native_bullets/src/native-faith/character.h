@@ -28,9 +28,9 @@
 
 using namespace godot;
 
-class Character : public Node2D
+class Character : public Area2D
 {
-  GDCLASS(Character, Node2D);
+  GDCLASS(Character, Area2D);
 
 public:
   // Enums
@@ -60,17 +60,28 @@ public:
 
   // Pooling
   uint32_t index_in_pool;
-  StatusEffects status_effects;
+  StatusEffects status_effects = {};
 
   // Constants
   static constexpr uint32_t MIN_GROUND_CHARACTER_Z_INDEX = 0;
   static constexpr uint32_t MAX_GROUND_CHARACTER_Z_INDEX = 40;
+
+  // to avoid miss detection
   static constexpr uint32_t MIN_ATTACK_AREA_HEIGHT = 120;
+
+  static inline const StringName GROUP_CHARACTERS = "characters";
+  static inline const StringName GROUP_CATS = "cats";
+  static inline const StringName GROUP_DOGS = "dogs";
+  static inline const StringName GROUP_AIR_UNIT_CATS = "air_unit_cats";
+  static inline const StringName GROUP_AIR_UNIT_DOGS = "air_unit_dogs";
+  static inline const StringName GROUP_AIR_UNITS = "air_units";
 
   static constexpr uint32_t DOG_COLLISION_MASK = 0b010000;
   static constexpr uint32_t CAT_COLLISION_MASK = 0b100000;
-  static constexpr uint32_t DOG_COLLISION_LAYER = 0b10;
-  static constexpr uint32_t CAT_COLLISION_LAYER = 0b100;
+  static constexpr uint32_t DOG_COLLISION_LAYER = 0b10000000010;
+  static constexpr uint32_t CAT_COLLISION_LAYER = 0b10000000100;
+  static constexpr uint32_t AIR_UNIT_DOG_COLLISION_LAYER = 0b10000000;
+  static constexpr uint32_t AIR_UNIT_CAT_COLLISION_LAYER = 0b1000000;
   static constexpr uint32_t DOG_ENEMY_DETECTION_MASK = 0b010100;
   static constexpr uint32_t CAT_ENEMY_DETECTION_MASK = 0b100010;
   static constexpr uint32_t DOG_DANMAKU_HITBOX_COLLISION_LAYER = 0b0100000000;
@@ -78,27 +89,33 @@ public:
   static constexpr uint32_t DOG_CUSTOM_AREA_COLLISION_MASK = 0b01010100;
   static constexpr uint32_t CAT_CUSTOM_AREA_COLLISION_MASK = 0b10100010;
 
-  static constexpr float GRAVITY = 1225.0f;
+  static constexpr float FACING_ANIMATION_DURATION = 0.075f;
 
-  static Ref<AudioStream> _default_boss_die_sfx;
+  static Ref<AudioStream> DEFAULT_ATTACK_HIT_SFX;
+  static Ref<AudioStream> DEFAULT_DIE_SFX;
+  static Ref<AudioStream> DEFAULT_BOSS_DIE_SFX;
 
   Character();
   ~Character();
 
 private:
   GDVIRTUAL1(_on_setup_power_scaling, float);
+  void _setup_power_scaling(float power_scale);
+
+  GDVIRTUAL0(_on_ready);
   GDVIRTUAL0(_on_updated_character);
-  GDVIRTUAL0(_handle_damage_taken);
+  GDVIRTUAL3(_handle_damage_taken, uint32_t, Variant, Node*);
   GDVIRTUAL0(_handle_knockedback_by_damage_taken);
 
   // Methods
   void _handle_past_knockback_health();
+  void _update_character();
   void _update_charcter_collision_shapes();
   void _setup_rect_shape_query();
-  void _apply_time_related_status_effects();
   void _update_next_knockback_health();
   void _apply_sprite_offset();
-  void _update_character_animation_node();
+  void _update_rect_shape_query_attack_range();
+  void _update_character_stats();
 
 public:
   void setup(Vector2 global_position, int level, TypedArray<String> abilities, bool special_attack_unlocked, Relationship relationship, bool is_boss = false);
@@ -123,8 +140,11 @@ public:
   void face_towards(Character *target);
   void reset();
   void take_damage(uint32_t amount, Variant attack, Node *attacker);
+  void add_status_effect(Ref<StatusEffect> status_effect);
+  void remove_status_effect(Ref<StatusEffect> status_effect);
 
   // Helper methods
+  Vector2 get_hitbox_size() const;
   Rect2 get_hitbox_rect() const;
   Vector2 get_danmaku_hitbox_position() const;
   String get_enemy_type() const;
@@ -132,7 +152,6 @@ public:
   String get_air_unit_enemy_group() const;
   String get_air_unit_group() const;
   uint32_t get_actual_z_index() const;
-  Rect2 get_collision_rect() const;
   uint32_t get_knockbacks_left() const;
   float get_power_scale() const;
   Vector2 get_effect_center_global_position() const;
@@ -174,6 +193,7 @@ public:
 
   PROPERTY(TypedArray<uint32_t>, base_attack_damages, {})
   std::vector<uint32_t> _attack_damages;
+  uint32_t get_base_attack_damage(uint32_t index = 0) const;
   uint32_t get_attack_damage(uint32_t index = 0) const;
   void update_attack_damage();
 
@@ -188,9 +208,13 @@ public:
   PROPERTY(uint32_t, attack_area, 0)
   PROPERTY(float, attack_area_offset, 0.0f)
   PROPERTY(uint32_t, attack_area_height, MIN_ATTACK_AREA_HEIGHT)
-  PROPERTY(float, time_wait_after_attack, 0.0f)
+  PROPERTY(float, time_idle_after_attack, 0.0f)
   PROPERTY(uint32_t, knockbacks, 3)
+
+  // dictate the direction the character will be going to
   PROPERTY(int8_t, march_direction, 1)
+
+  // dictate the direction the character is currently facing
   PROPERTY(int8_t, face_direction, 1)
 
 private:
@@ -209,7 +233,10 @@ public:
   PROPERTY_GETONLY(String, character_id, "")
 
   PROPERTY_GETONLY(Vector2, sprite_offset, Vector2())
-  PROPERTY_GETONLY(bool, is_boss, false)
+
+  bool _is_boss = false;
+  bool is_boss() const;
+
   PROPERTY_GETONLY(uint32_t, level, 1)
   PROPERTY_GETONLY(uint32_t, max_health, 160)
   PROPERTY_GETONLY(uint32_t, next_knockback_health, 0)
@@ -217,7 +244,7 @@ public:
   // Node references
   PROPERTY_GETONLY(AnimationPlayer *, animation_player, nullptr)
   PROPERTY_GETONLY(FSM*, fsm, nullptr)
-  PROPERTY_GETONLY(Node2D *, animation_node, nullptr)
+  PROPERTY_GETONLY(Node2D *, character_animation_node, nullptr)
   PROPERTY_GETONLY(CooldownTimer *, attack_cooldown_timer, nullptr)
   PROPERTY_GETONLY(CollisionShape2D *, hitbox, nullptr)
   PROPERTY_GETONLY(Area2D *, danmaku_hitbox_area2d, nullptr)
@@ -227,7 +254,7 @@ private:
   TypedArray<String> _abilities;
 
 public:
-  bool has_ability(String ability_id) const;
+  bool has_ability(StringName ability) const;
 
   // Internal method, will be called by spawner when z_index is modified by props
 private:
@@ -239,6 +266,7 @@ public:
 private:
   float _prev_cooldown_multiplier = 1.0f;
   Ref<Tween> _face_anim_tween = nullptr;
+  Ref<RectangleShape2D> _hitbox_shape = nullptr;
 
   // don't ask me wtf im doing with this
 private:
@@ -255,11 +283,12 @@ protected:
 
 public:
   void _ready() override;
-  void _validate_property(Dictionary property);
+	void _validate_property(PropertyInfo &p_property) const;
   void _notification(int p_what);
 };
 
 VARIANT_ENUM_CAST(Character::Kind);
+VARIANT_ENUM_CAST(Character::Relationship);
 VARIANT_ENUM_CAST(Character::UnitType);
 VARIANT_ENUM_CAST(Character::AttackType);
 
