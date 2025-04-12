@@ -4,10 +4,10 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include "../macros.h"
+#include "shield_talent.h"
+#include "survive_talent.h"
 
 class Character;
-class ShieldTalent;
-class SurviveTalent;
 
 using namespace godot;
 

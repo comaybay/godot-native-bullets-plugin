@@ -16,6 +16,12 @@ float CooldownTimer::get_time_left() const
       return _delta_timer != nullptr ? _delta_timer->get_time_left() : 0.0f;
 }
 
+void CooldownTimer::set_time_left(float p_wait_time) {
+    if (_delta_timer != nullptr) {
+        _delta_timer->set_time_left(p_wait_time);
+    }
+}
+
 bool CooldownTimer::is_stopped() const
 {
     return _delta_timer == nullptr;
@@ -26,6 +32,12 @@ void CooldownTimer::start()
   _delta_timer = &Global::get_singleton()->get_delta_timer(wait_time, _immune_to_time_scale);
   _delta_timer->set_speed_scale(_speed_scale);
   _delta_timer->connect("timeout", callable_mp(this, &CooldownTimer::_on_timeout), CONNECT_ONE_SHOT);
+}
+
+void CooldownTimer::timeout_now() {
+  _delta_timer->cancel();
+  _delta_timer->disconnect("timeout", callable_mp(this, &CooldownTimer::_on_timeout));
+  CooldownTimer::_on_timeout();
 }
 
 void CooldownTimer::_on_timeout() {

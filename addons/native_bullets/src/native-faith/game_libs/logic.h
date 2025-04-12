@@ -11,9 +11,10 @@
 #include <godot_cpp/variant/rect2.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 
+#include "../character.h"
+
 using namespace godot;
 
-class Character;
 class SetFlyPathCurveOptions;
 class SetCurveOptions;
 class TweenMoveOptions;

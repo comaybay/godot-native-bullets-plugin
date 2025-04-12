@@ -63,10 +63,6 @@ Global* Global::get_singleton()
 
 void Global::_ready() {
     _singleton = this;
-    VIEWPORT_SIZE = Vector2(
-        ProjectSettings::get_singleton()->get_setting("display/window/size/viewport_width"),
-        ProjectSettings::get_singleton()->get_setting("display/window/size/viewport_height")
-    );
     tree = get_tree();
     _special_chars.push_back(".");
     _special_chars.push_back(",");

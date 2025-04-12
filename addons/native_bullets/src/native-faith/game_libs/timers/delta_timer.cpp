@@ -21,6 +21,11 @@ void DeltaTimer::start(float p_wait_time)
     _running = true;
 }
 
+void DeltaTimer::cancel() {
+    _running = false;
+    time_left = 0.0f;
+}
+
 bool DeltaTimer::update(float delta)
 {
     float time_scale = (immune_to_time_scale * Global::get_singleton()->time_scale) + ((!immune_to_time_scale) * 1.0f);
@@ -35,6 +40,10 @@ bool DeltaTimer::update(float delta)
     }
 
     return false;
+}
+
+void DeltaTimer::set_time_left(float p_time_left) {
+    time_left = p_time_left;
 }
 
 float DeltaTimer::get_time_left() const

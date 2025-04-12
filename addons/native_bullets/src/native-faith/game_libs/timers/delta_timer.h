@@ -23,11 +23,13 @@ public:
     DeltaTimer();
     bool is_running() const;
     void start(float p_wait_time);
+    void cancel();
 
     // return true if the timer stopped running
     bool update(float delta);
 
     float get_time_left() const;
+    void set_time_left(float time_left);
     float get_wait_time() const;
     bool get_immune_to_time_scale() const;
     float get_recover_delta() const;

@@ -4,6 +4,8 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 
+#include "../character.h"
+#include "../game_libs/logic.h"
 
 void ShieldTalent::_bind_methods() {
     ADD_SIGNAL(MethodInfo("shield_broken"));

@@ -1,6 +1,7 @@
 #include "survive_talent.h"
 #include <godot_cpp/core/class_db.hpp>
 #include "../game_libs/global.h"
+#include "../character.h"
 
 void SurviveTalent::_bind_methods() {
     ADD_SIGNAL(MethodInfo("nexted"));

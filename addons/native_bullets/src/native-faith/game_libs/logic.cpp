@@ -1,5 +1,4 @@
 #include "logic.h"
-#include "../character.h"
 #include "options/set_fly_path_curve_options.h"
 #include "options/set_curve_options.h"
 #include "options/tween_move_options.h"
@@ -83,7 +82,7 @@ void Logic::set_fly_path_curve(Ref<Curve2D> curve, Ref<SetFlyPathCurveOptions> o
     set_curve(curve, curve_options);
     
     // Ensure character fly path curves doesn't go below the battlefield ground
-    float min_allowed_height = -options->character->get_collision_rect().size.y * 0.5;
+    float min_allowed_height = -options->character->get_hitbox_size().y * 0.5;
     if (curve->get_point_position(1).y > min_allowed_height) {
         up_angle = -up_angle;
         

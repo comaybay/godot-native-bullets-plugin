@@ -9,8 +9,6 @@
 
 using namespace godot;
 
-class Character;
-
 class SpecialAttackTurnChecker : public Resource
 {
     GDCLASS(SpecialAttackTurnChecker, Resource);

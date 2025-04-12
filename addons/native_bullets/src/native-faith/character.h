@@ -99,6 +99,11 @@ public:
   ~Character();
 
 private:
+  Node* _audio_player = nullptr;
+
+  // TODO: remove once implemented own bullet system
+  Node* _native_bullets = nullptr;
+
   GDVIRTUAL1(_on_setup_power_scaling, float);
   void _setup_power_scaling(float power_scale);
 
@@ -116,6 +121,7 @@ private:
   void _apply_sprite_offset();
   void _update_rect_shape_query_attack_range();
   void _update_character_stats();
+  uint32_t _calculate_next_knockback_health() const;
 
 public:
   void setup(Vector2 global_position, int level, TypedArray<String> abilities, bool special_attack_unlocked, Relationship relationship, bool is_boss = false);
@@ -127,7 +133,7 @@ public:
   bool is_rect_shape_colliding();
   bool is_on_ground() const;
   bool is_above_ground() const;
-  bool is_past_knockback_health() const;
+  bool _is_past_knockback_health() const;
   void knockback(float scale = 1.0);
   void kill();
   void play_attack_sfx();
@@ -147,10 +153,10 @@ public:
   Vector2 get_hitbox_size() const;
   Rect2 get_hitbox_rect() const;
   Vector2 get_danmaku_hitbox_position() const;
-  String get_enemy_type() const;
-  String get_enemy_group() const;
-  String get_air_unit_enemy_group() const;
-  String get_air_unit_group() const;
+  Kind get_enemy_type() const;
+  StringName get_enemy_group() const;
+  StringName get_air_unit_enemy_group() const;
+  StringName get_air_unit_group() const;
   uint32_t get_actual_z_index() const;
   uint32_t get_knockbacks_left() const;
   float get_power_scale() const;

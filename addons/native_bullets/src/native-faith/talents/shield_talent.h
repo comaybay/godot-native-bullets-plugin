@@ -7,11 +7,11 @@
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/rect2.hpp>
 
-#include "../character.h"
-#include "../game_libs/logic.h"
 #include "fx_shield.h"
 
 using namespace godot;
+
+class Character;
 
 class ShieldTalent : public Resource {
     GDCLASS(ShieldTalent, Resource);

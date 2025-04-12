@@ -4,7 +4,8 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include "../game_libs/global.h"
-#include "../character.h"
+
+class Character;
 
 using namespace godot;
 

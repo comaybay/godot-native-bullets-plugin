@@ -25,8 +25,10 @@ public:
     void set_speed_scale(float speed_scale);
 
     float get_time_left() const;
+    void set_time_left(float time_left); // won't do anything if not running
     bool is_stopped() const;
     void start();
+    void timeout_now();
 
     void set_immune_to_time_scale(bool enabled);
 };

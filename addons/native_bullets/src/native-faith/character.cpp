@@ -10,6 +10,8 @@
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/physics_direct_space_state2d.hpp>
 #include <godot_cpp/classes/world2d.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
 
 using namespace godot;
 
@@ -22,6 +24,7 @@ Character::Character() {
 }
 
 Character::~Character() {
+    PhysicsServer2D::get_singleton()->free_rid(rect_shape_query->get_shape_rid());
 }
 
 void Character::_bind_methods() {
@@ -85,13 +88,10 @@ void Character::_bind_methods() {
     BIND_PROPERTY(march_direction, Variant::INT, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
     BIND_PROPERTY(velocity, Variant::VECTOR2, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
 
-
     BIND_METHOD_GETTER(max_health);
     BIND_METHOD_GETTER(next_knockback_health);
     BIND_METHOD_GETTER(level);
     BIND_METHOD(is_boss);
-    
-    
     BIND_METHOD(get_attack_cooldown_timer);
 
     // Register methods
@@ -123,7 +123,7 @@ void Character::_bind_methods() {
     BIND_METHOD(get_effect_center_global_position);
     BIND_METHOD(get_danmaku_hitbox_position);
         
-    BIND_METHOD(is_past_knockback_health);
+    BIND_METHOD(_is_past_knockback_health);
     
     // Fix knockback default parameter
     BIND_METHOD_1D1(knockback, "scale", DEFVAL(1.0f));
@@ -217,7 +217,6 @@ DEFINE_GETTER_SETTER(Character, Ref<AudioStream>, attack_hit_sfx);
 DEFINE_GETTER_SETTER(Character, Ref<AudioStream>, attack_sfx);
 DEFINE_GETTER_SETTER(Character, Ref<AudioStream>, before_death_sfx);
 DEFINE_GETTER_SETTER(Character, Ref<AudioStream>, die_sfx);
-void Character::__z_index_modified_by_props() { __z_index_already_set = true; }
 
 // Node references
 DEFINE_GETTER(Character, AnimationPlayer*, animation_player);
@@ -231,7 +230,6 @@ DEFINE_GETTER(Character, CollisionShape2D*, danmaku_hitbox);
 // Other variables
 DEFINE_GETTER_SETTER(Character, Ref<PhysicsShapeQueryParameters2D>, rect_shape_query);
 DEFINE_GETTER_SETTER(Character, Vector2, velocity);
-DEFINE_GETTER(Character, Vector2, sprite_offset);
 
 #undef DEFINE_GETTER_SETTER
 
@@ -314,8 +312,55 @@ Rect2 Character::get_hitbox_rect() const {
     return hitbox_rect;
 }
 
-bool Character::has_ability(StringName ability) const {
-    return _abilities.has('all') || _abilities.has(ability);
+Vector2 Character::get_danmaku_hitbox_position() const {
+    return danmaku_hitbox_area2d->get_global_position() + danmaku_hitbox->get_position();
+}
+// attack: the attack object, can be null
+// attacker: owner of the attack (usually is a character), can be null
+void Character::take_damage(uint32_t amount, Variant attack, Node* attacker) {
+    if (talents->shield != nullptr && !talents->shield->is_shield_broken()) {
+        talents->shield->take_damage(amount, attack);
+        return;
+    }
+    
+    health -= amount * status_effects.defense_multiplier;
+    
+    if (_1hp_mode) {
+        health = MAX(health, 1);
+    }
+    
+    if (_is_past_knockback_health()) {
+        _handle_past_knockback_health();
+    }
+}
+
+void Character::_handle_past_knockback_health() {
+    if (health > 0) {
+        _update_next_knockback_health();
+    }
+    
+    // instantly recharge attack on last knockback
+    if (get_knockbacks_left() == 1) {
+        attack_cooldown_timer->timeout_now();
+    }
+    
+    if (health > 0) {
+        knockback();
+        return;
+    }
+    
+    if (talents->survive.is_valid() && talents->survive->next()) {
+        health = 1;
+        knockback();
+        return;
+    }
+    
+    if (before_death_sfx.is_valid()) {
+        _audio_player->call("play_in_battle_sfx", before_death_sfx);
+    }
+    
+    emit_signal("zero_health");
+    knockback();
 }
 
 uint32_t Character::get_knockbacks_left() const {
@@ -325,6 +370,140 @@ uint32_t Character::get_knockbacks_left() const {
         // health + 1 because that's just how it works ok
         return MIN(1 + MIN(health - 1, max_health) / (max_health / knockbacks), knockbacks);
     }
+}
+
+void Character::_update_next_knockback_health() {
+    while (_is_past_knockback_health()) {
+        next_knockback_health = _calculate_next_knockback_health();
+    }
+}
+
+uint32_t Character::_calculate_next_knockback_health() const {
+    return MAX(0, next_knockback_health - MAX(1, (max_health / knockbacks)));
+}
+
+bool Character::_is_past_knockback_health() const {
+    return health <= next_knockback_health;
+}
+
+void Character::knockback(float scale) {
+    if (health <= 0) {
+        // override scale when character is about to die
+        scale = MAX(1.25f, scale);
+    }
+    
+    Dictionary data = {};
+    data["scale"] = scale;
+    fsm->change_state("KnockbackState", data);
+    emit_signal("knockedback");
+}
+
+void Character::kill() {
+    emit_signal("knockedback");
+    emit_signal("zero_health");
+    fsm->change_state("DieState");
+}
+
+void Character::play_attack_sfx() {
+    _audio_player->call("play_in_battle_sfx", attack_sfx, _audio_player->call("get_random_pitch_scale"));
+}
+
+void Character::_on_danmaku_bullet_entered(RID area_rid, Area2D* _area, int area_shape_index, int local_shape_index) {
+    if (!_native_bullets->call("is_bullet_existing", area_rid, area_shape_index)) {
+        return;
+    }
+    
+    int bullet_id = _native_bullets->call("get_bullet_from_shape", area_rid, area_shape_index);
+    
+    Ref<RefCounted> controller = _native_bullets->call("get_bullet_property", bullet_id, "data");
+    
+    if (!(controller->get("destroy_on_hit") && controller->get("has_hit")) && (controller->get("kind").operator uint32_t()) != kind) {
+        controller->emit_signal("body_enter", this);
+        controller->set("has_hit", true);
+        controller->set("hit_position", controller->get("position"));
+    }
+}
+
+Character::Kind Character::get_enemy_type() const {
+	return kind == Kind::DOG ? Kind::CAT : Kind::DOG;
+}
+
+StringName Character::get_enemy_group() const {
+	return kind == Kind::DOG ? GROUP_CATS : GROUP_DOGS;
+}
+
+StringName Character::get_air_unit_enemy_group() const {
+	return kind == Kind::DOG ? GROUP_AIR_UNIT_CATS : GROUP_AIR_UNIT_DOGS;
+}
+
+StringName Character::get_air_unit_group() const {
+	return kind == Kind::DOG ? GROUP_AIR_UNIT_DOGS : GROUP_AIR_UNIT_CATS;
+}
+
+// This happens when character is knockedback
+bool Character::is_immune_to_attack() {
+    if (kind == Kind::DOG) {
+        return !get_collision_layer_value(2);
+    } else {
+        return !get_collision_layer_value(3);
+    }
+}
+
+void Character::set_mouse_area_detectable(bool detectable) {
+    set_collision_layer_value(11, detectable);
+}
+
+void Character::set_immune_to_attack(bool immune) {
+    bool value = !immune;
+    danmaku_hitbox_area2d->set_deferred("monitoring", value);
+    danmaku_hitbox_area2d->set_collision_layer_value(4, value);
+    if (kind == Kind::DOG) {
+        set_collision_layer_value(2, value);
+        danmaku_hitbox_area2d->set_collision_layer_value(9, value);
+        if (unit_type == UnitType::AIR) {
+            set_collision_layer_value(8, value);
+        }
+    } else {
+        set_collision_layer_value(3, value);
+        danmaku_hitbox_area2d->set_collision_layer_value(10, value);
+        if (unit_type == UnitType::AIR) {
+            set_collision_layer_value(7, value);
+        }
+    }
+}
+
+bool Character::is_knockedback() const {
+    return fsm->get_current_state_name() == StringName("KnockbackState");
+}
+
+void Character::__z_index_modified_by_props() {
+    __z_index_already_set = true;
+}
+
+// returns the delta that is not used if hitting ground
+float Character::move(float delta) {
+    Vector2 _prev_bottom = get_bottom_global_position();
+    
+    set_global_position(get_global_position() + velocity * delta);
+    
+    if (is_above_ground()) {
+        return 0.0f;
+    } else {
+        float impact_scale = abs(_prev_bottom.y) / (velocity.y * delta);
+        float remainder_delta = delta * (1.0f - impact_scale);
+        // revert back the position to the ground
+        set_global_position(get_global_position() - velocity * remainder_delta);
+        
+        return remainder_delta;
+    }
+}
+
+void Character::face_towards(Character* target) {
+    face_direction = UtilityFunctions::signi(target->get_effect_center_global_position().x - get_effect_center_global_position().x);
+}
+
+bool Character::has_ability(StringName ability) const {
+    return _abilities.has('all') || _abilities.has(ability);
 }
 
 void Character::setup(Vector2 global_position, int level, TypedArray<String> abilities, bool special_attack_unlocked, Relationship relationship, bool is_boss) {
@@ -385,6 +564,9 @@ void Character::_ready() {
         return;
     }
 
+    _audio_player = get_tree()->get_root()->get_node<Node>("AudioPlayer");
+    _native_bullets = get_tree()->get_root()->get_node<Node>("Bullets");
+
     hitbox = get_node<CollisionShape2D>("Hitbox");
     animation_player = get_node<AnimationPlayer>("AnimationPlayer");
     fsm = get_node<FSM>("FSM");
@@ -432,7 +614,7 @@ void Character::_ready() {
                       "ERROR: CharacterAnimation does not have accessed as unique name");
     
     // Set default boss death SFX if not provided
-    if (is_boss && before_death_sfx.is_null()) {
+    if (_is_boss && before_death_sfx.is_null()) {
         before_death_sfx = DEFAULT_BOSS_DIE_SFX;
     }
 
@@ -548,16 +730,12 @@ void Character::_setup_rect_shape_query() {
     rect_shape_query->set_shape_rid(PhysicsServer2D::get_singleton()->rectangle_shape_create());
 }
 
-Character::~Character() {
-    PhysicsServer2D::get_singleton()->free_rid(rect_shape_query->get_shape_rid());
-}
-
 void Character::_update_character() {
     max_health = health;
     
     // this is kinda dumb i couldn't think if a way for this to update correctly while reusing the same logic
     next_knockback_health = max_health;
-    next_knockback_health = get_next_knockback_health();
+    next_knockback_health = _calculate_next_knockback_health();
 
     // for non long range attack, attack area will also includes half of the hitbox x length
     // (character will attack enemies that are inside of them)
